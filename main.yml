@@ -1,0 +1,45 @@
+---
+- name: setup weather station
+  hosts: weatherstation
+
+  tasks:
+    - name: enable i2c
+      shell: raspi-config nonint do_i2c 0
+      become: true
+
+    - name: install pip
+      apt:
+        name: python3-pip
+        state: present
+      become: true
+
+    - name: install pimeroni-bme280
+      pip:
+        name: pimoroni-bme280
+        state: present
+      become: true
+    - name: install smbus
+      pip:
+        name: smbus
+        state: present
+      become: true
+
+
+    - name: install pigpio
+      pip:
+        name: pigpio
+        state: present
+      become: true
+
+    - name: start and enable pigpiod
+      service:
+        name: pigpiod
+        state: started
+        enabled: True
+      become: true
+
+    - name: copy python script
+      copy:
+        src: python/
+        dest: /home/isitar/weatherstation/
+
