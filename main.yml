@@ -6,13 +6,25 @@
    - source_code
 
   tasks:
-    - name: enable i2c
+    - name: Get I2C status
+      shell: raspi-config nonint get_i2c
+      register: i2c_status
+      changed_when: false
+
+    - name: enable I2C
       shell: raspi-config nonint do_i2c 0
+      when: i2c_status.stdout != '0'
       become: true
 
-    - name: install pip
-      apt:
-        name: python3-pip
-        state: present
+    - name: Get SPI status
+      shell: raspi-config nonint get_spi
+      register: spi_status
+      changed_when: false
+
+    - name: enable SPI
+      shell: raspi-config nonint do_spi 0
+      when: spi_status.stdout != '0'
       become: true
+
+
 

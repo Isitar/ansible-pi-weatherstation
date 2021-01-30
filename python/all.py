@@ -6,7 +6,7 @@ try:
 except ImportError:
     from smbus import SMBus
 from bme280 import BME280
-
+import board
 # format & output
 from datetime import datetime
 import csv
@@ -14,6 +14,7 @@ import csv
 # custom classes
 import dht22_sensor
 import bme280_sensor
+import ldr_sensor
 
 # Intervals of about 2 seconds or less will eventually hang the DHT22.
 INTERVAL = 3
@@ -29,6 +30,7 @@ next_reading = time.time()
 bus = SMBus(1)
 bme280 = BME280(i2c_dev=bus)
 bme280sensor = bme280_sensor.sensor(bme280)
+ldrsensor = ldr_sensor.sensor(board.SCK, board.MISO, board.MOSI, board.D26, 0)
 
 with open('weather_data.csv', mode='a+') as data_file:
     data_writer = csv.writer(data_file, delimiter=';',
@@ -53,23 +55,25 @@ with open('weather_data.csv', mode='a+') as data_file:
         except:
             print('bme280 err')
 
+        try:
+            ldrsensor.trigger()
+        except:
+            print('ldr error')
+
         time.sleep(0.2)
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        outputFormat = '{}: [{:10s}] {:7.2f}°C {:10.2f}hPa {:7.2f}% {:7d}'
 
-        print('{}: [{:10s}] {:7.2f}°C {:10.2f}hPa {:7.2f}%'.format(
-            now, 'bme280', bme280sensor.temperature, bme280sensor.pressure, bme280sensor.humidity))
-        print('{}: [{:10s}] {:7.2f}°C {:10.2f}hPa {:7.2f}%'.format(
-            now, 'dht1', dht1.temperature(), 0, dht1.humidity()))
-        print('{}: [{:10s}] {:7.2f}°C {:10.2f}hPa {:7.2f}%'.format(
-            now, 'dht2', dht2.temperature(), 0, dht2.humidity()))
+        print(outputFormat.format(now, 'bme280', bme280sensor.temperature, bme280sensor.pressure, bme280sensor.humidity, 0))
+        print(outputFormat.format(now, 'dht1', dht1.temperature(), 0, dht1.humidity(), 0))
+        print(outputFormat.format(now, 'dht2', dht2.temperature(), 0, dht2.humidity(), 0))
+        print(outputFormat.format(now, 'ldr', 0, 0, 0, ldrsensor.ldr_value))
 
-        data_writer.writerow([now, 'bme280', bme280sensor.temperature,
-                              bme280sensor.pressure, bme280sensor.humidity])
-        data_writer.writerow(
-            [now, 'dht1', dht1.temperature(), 0, dht1.humidity()])
-        data_writer.writerow(
-            [now, 'dht2', dht2.temperature(), 0, dht2.humidity()])
+        data_writer.writerow([now, 'bme280', bme280sensor.temperature,bme280sensor.pressure, bme280sensor.humidity, None])
+        data_writer.writerow([now, 'dht1', dht1.temperature(), None, dht1.humidity(), None])
+        data_writer.writerow([now, 'dht2', dht2.temperature(), None, dht2.humidity(), None])
+        data_writer.writerow([now, 'ldr', None, None, None, ldrsensor.ldr_value])
 
         next_reading += INTERVAL
 
