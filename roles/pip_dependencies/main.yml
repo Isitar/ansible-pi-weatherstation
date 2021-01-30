@@ -1,0 +1,24 @@
+- name: install pimeroni-bme280
+  pip:
+    name: pimoroni-bme280
+    state: present
+  become: true
+- name: install smbus
+  pip:
+    name: smbus
+    state: present
+  become: true
+
+- name: install pigpio
+  pip:
+    name: pigpio
+    state: present
+  become: true
+  notify:
+    - start and enable pigpiod
+
+- name: install mcp3008
+  pip:
+    name: adafruit-circuitpython-mcp3xxx
+    state: present
+  become: true

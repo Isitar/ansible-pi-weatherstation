@@ -1,0 +1,4 @@
+- name: copy python script
+  copy:
+    src: python/
+    dest: /home/isitar/weatherstation/

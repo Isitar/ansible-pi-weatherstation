@@ -1,0 +1,6 @@
+- name: start and enable pigpiod
+  service:
+    name: pigpiod
+    state: started
+    enabled: True
+  become: true

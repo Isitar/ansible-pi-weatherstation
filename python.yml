@@ -1,9 +1,5 @@
 ---
 - name: copy python scripts
   hosts: weatherstation
-
-  tasks:
-    - name: copy python script
-      copy:
-        src: python/
-        dest: /home/isitar/weatherstation/
+  roles:
+    - source_code
