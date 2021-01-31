@@ -34,3 +34,9 @@
     name: adafruit-blinka
     state: present
   become: true
+
+- name: install influxdb-client
+  pip:
+    name: influxdb-client
+    state: present
+  become: true

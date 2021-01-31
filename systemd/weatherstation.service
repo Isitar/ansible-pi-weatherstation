@@ -1,0 +1,12 @@
+[Unit]
+Description=Weatherstation
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/python3 /home/isitar/weatherstation/all.py
+User=root
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

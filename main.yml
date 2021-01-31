@@ -26,5 +26,15 @@
       when: spi_status.stdout != '0'
       become: true
 
+    - name: copy systemd
+      copy:
+        src: systemd/weatherstation.service
+        dest: /etc/systemd/system/weatherstation.service
+      become: true
 
-
+    - name: start and enable weatherstation service
+      service:
+        name: weatherstation
+        state: started
+        enabled: True
+      become: true
