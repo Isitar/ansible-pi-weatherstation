@@ -21,11 +21,12 @@ import influx_writer
 
 # Intervals of about 2 seconds or less will eventually hang the DHT22.
 INTERVAL = 5 * 60
+startupSkips = 5
 
 pi = pigpio.pi()
 
-dht1 = dht22_sensor.sensor(pi, 17, LED=22, power=27)
-dht2 = dht22_sensor.sensor(pi, 5, LED=13, power=6)
+dht1 = dht22_sensor.sensor(pi, 27, LED=22, power=17)
+dht2 = dht22_sensor.sensor(pi, 13, LED=5, power=6)
 
 r = 0
 
@@ -35,14 +36,17 @@ bme280 = BME280(i2c_dev=bus)
 bme280sensor = bme280_sensor.sensor(bme280)
 ldrsensor = ldr_sensor.sensor(board.SCK, board.MISO, board.MOSI, board.D26, 0)
 
-token = "" # insert token here
+# insert token here
+token = ""
 org = "isitar"
 bucket = "weatherdata"
 influxWriter = influx_writer.InfluxWriter(token, org, bucket, 'https://weather-influx.isitar.ch')
 
+
 def newPrint(args):
     print(args)
     sys.stdout.flush()
+
 
 with open('weather_data.csv', mode='a+') as data_file:
     data_writer = csv.writer(data_file, delimiter=';',
@@ -52,32 +56,42 @@ with open('weather_data.csv', mode='a+') as data_file:
 
         try:
             dht1.trigger()
-            influxWriter.writeHumidity('dht1', float(dht1.humidity()))
-            influxWriter.writeTemperature('dht1', float(dht1.temperature()))
+            if (startupSkips <= 0):
+                influxWriter.writeHumidity('dht1', float(dht1.humidity()))
+                influxWriter.writeTemperature(
+                    'dht1', float(dht1.temperature()))
         except:
             dht1.rhum = 0
             dht1.temp = 0
 
         try:
             dht2.trigger()
-            influxWriter.writeHumidity('dht2', float(dht1.humidity()))
-            influxWriter.writeTemperature('dht2', float(dht1.temperature()))
+            if (startupSkips <= 0):
+                influxWriter.writeHumidity('dht2', float(dht1.humidity()))
+                influxWriter.writeTemperature(
+                    'dht2', float(dht1.temperature()))
         except:
             dht2.rhum = 0
             dht2.temp = 0
 
         try:
             bme280sensor.trigger()
-            influxWriter.writeHumidity('bme280', float(bme280sensor.humidity))
-            influxWriter.writeTemperature('bme280', float(bme280sensor.temperature))
-            influxWriter.writePressure('bme280', float(bme280sensor.pressure))
+            if (startupSkips <= 0):
+                influxWriter.writeHumidity(
+                    'bme280', float(bme280sensor.humidity))
+                influxWriter.writeTemperature(
+                    'bme280', float(bme280sensor.temperature))
+                influxWriter.writePressure(
+                    'bme280', float(bme280sensor.pressure))
+
         except:
             newPrint('bme280 err')
             sys.stdout.flush()
 
         try:
             ldrsensor.trigger()
-            influxWriter.writeLight('ldr', ldrsensor.ldr_value)
+            if (startupSkips <= 0):
+                influxWriter.writeLight('ldr', ldrsensor.ldr_value)
         except:
             newPrint('ldr error')
 
@@ -86,7 +100,7 @@ with open('weather_data.csv', mode='a+') as data_file:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         outputFormat = '{}: [{:10s}] {:7.2f}°C {:10.2f}hPa {:7.2f}% {:7d}'
 
-        newPrint(outputFormat.format(now, 'bme280', bme280sensor.temperature, bme280sensor.pressure, bme280sensor.humidity, 0))
+        newPrint(outputFormat.format(now, 'bme280', bme280sensor.temperature,bme280sensor.pressure, bme280sensor.humidity, 0))
         newPrint(outputFormat.format(now, 'dht1', dht1.temperature(), 0, dht1.humidity(), 0))
         newPrint(outputFormat.format(now, 'dht2', dht2.temperature(), 0, dht2.humidity(), 0))
         newPrint(outputFormat.format(now, 'ldr', 0, 0, 0, ldrsensor.ldr_value))
@@ -100,6 +114,8 @@ with open('weather_data.csv', mode='a+') as data_file:
 
         # Overall INTERVAL second polling.
         time.sleep(next_reading-time.time())
+        if (startupSkips > 0):
+            startupSkips -= 1
 
 dht1.cancel()
 dht2.cancel()
